@@ -1,0 +1,3 @@
+#!/bin/bash
+
+CACHEDHOST=berne:11211 activator -jvm-debug 9999

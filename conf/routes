@@ -1,0 +1,11 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# memcached ops
+GET        /memset/:k/:v        controllers.Application.memset(k: String, v: String)
+GET        /memget/:k           controllers.Application.memget(k: String)
+GET        /memdel/:k           controllers.Application.memdrop(k: String)
+
+# Map static resources from the /public folder to the /assets URL path
+GET        /assets/*file        controllers.Assets.at(path="/public", file)
