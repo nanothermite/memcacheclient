@@ -16,16 +16,43 @@ object Application extends Controller {
   val maxDuration:Duration = 2.milli
 
   /**
+   * actual work horse setting
+   * @param key string
+   * @param value string
+   * @return
+   */
+  def setSeq(key:String, value: String) : Future[Any] = {
+    Future.firstCompletedOf(Seq(myCache.set(key, value, minDuration), Promise.timeout("Oops", maxDuration)))
+  }
+
+  /**
+   * actual work horse getting
+   * @param key string
+   * @return
+   */
+  def getSeq(key:String) : Future[Any] = {
+    Future.firstCompletedOf(Seq(myCache.get[String](key), Promise.timeout("Oops", minDuration)))
+  }
+
+  /**
+   * actual work horse deleting
+   * @param key string
+   * @return
+   */
+  def delSeq(key:String) : Future[Any] = {
+    Future.firstCompletedOf(Seq(myCache.delete(key), Promise.timeout("Oops", maxDuration)))
+  }
+
+
+  /**
    * set cache key to value asynchronously
    * @param key string
    * @param value string
    * @return
    */
   def memset(key: String, value: String) = Action.async {
-    val op: Future[Unit] = myCache.set(key, value, minDuration)
-    val timeoutFuture = Promise.timeout("Oops", maxDuration)
-    Future.firstCompletedOf(Seq(op, timeoutFuture)).map {
-      case i: Unit => Ok("ok")
+    setSeq(key, value).map {
+      case i : Unit   => Ok("ok")
       case t : AnyRef => Ok("unset")
     }
   }
@@ -49,9 +76,7 @@ object Application extends Controller {
    * @return
    */
   def memget(key: String) = Action.async {
-    val futureInt = myCache.get[String](key)
-    val timeoutFuture = Promise.timeout("Oops", minDuration)
-    Future.firstCompletedOf(Seq(futureInt, timeoutFuture)).map {
+    getSeq(key).map {
       case i: Option[String] => Ok(if (i != None) i.get else "nf")
       case t: AnyRef => Ok("broke")
     }
@@ -63,9 +88,7 @@ object Application extends Controller {
    * @return
    */
   def memdrop(key: String) = Action.async {
-    val futureBool = myCache.delete(key)
-    val timeoutFuture = Promise.timeout("Oops", maxDuration)
-    Future.firstCompletedOf(Seq(futureBool, timeoutFuture)).map {
+    delSeq(key).map {
       case i: Boolean => Ok(if (i) "hit" else "miss")
       case t: AnyRef => Ok("broke")
     }
